@@ -262,8 +262,9 @@ if __name__ == '__main__':
         '--mp3_quality', default=1, required=False, type=try_int_coerce,
         help=(
             "Quality or bitrate of MP3 encoding. Either supply an integer to "
-            "encode with a variable bitrate quality preset or supply a string "
-            "like 320k to encode with a constant bitrate. (default=1)"
+            "encode with a variable bitrate quality preset (LAME encoder's "
+            "-V option) or supply a string like 320k to encode with a "
+            "constant bitrate. (default=1)"
         )
     )
 
