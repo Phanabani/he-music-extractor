@@ -3,7 +3,6 @@ from io import SEEK_SET, SEEK_CUR
 import logging
 from struct import unpack
 from typing import BinaryIO, List, Optional, Union
-import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +84,7 @@ class HEMusicExtractor:
             file.seek(song.offset, SEEK_SET)
             sound_fmt = file.read(4)
             if sound_fmt != b'DIGI':
-                warnings.warn(
+                logger.warning(
                     f"Sound format {sound_fmt} for song with id {song.id} "
                     f"isn't supported; skipping"
                 )
@@ -107,7 +106,7 @@ class HEMusicExtractor:
                 # Ensure we've moved ahead to an SDAT chunk
                 chunk_header = f.read(4)
             if chunk_header != b'SDAT':
-                warnings.warn(
+                logger.warning(
                     f"Song with id {song.id} at offset {song.offset} failed a "
                     f"payload header check; skipping"
                 )
