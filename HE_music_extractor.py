@@ -191,10 +191,14 @@ if __name__ == '__main__':
 
         options = ['-c:a', 'libmp3lame']
 
-        assert (
+        if not (
                 quality_or_bitrate is None
                 or isinstance(quality_or_bitrate, (int, str))
-        )
+        ):
+            raise TypeError(
+                f"quality_or_bitrate must one of type (int, str) or None, got "
+                f"{type(quality_or_bitrate)}"
+            )
         if isinstance(quality_or_bitrate, int):
             options += ['-q:a', str(quality_or_bitrate)]
         elif isinstance(quality_or_bitrate, str):
