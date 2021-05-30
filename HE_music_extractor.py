@@ -40,29 +40,29 @@ class HEMusicExtractor:
         assert not file.closed
 
         # Read header
-        logger.debug('Reading file header')
+        logger.debug("Reading file header")
         file.seek(0, SEEK_SET)
         if file.read(4) != b'SONG':
-            raise RuntimeError('File is not a music container')
+            raise RuntimeError("File is not a music container")
 
         file.seek(4, SEEK_CUR)  # total_size
         assert file.read(4) == b'SGHD'
         header_len: int = unpack('>I', file.read(4))[0]
         if header_len != 40:
-            logger.debug('Header length is not 40, he_version < 80')
+            logger.debug("Header length is not 40, he_version < 80")
             he_version = 70
 
         total_tracks: int = unpack('<I', file.read(4))[0]
-        logger.debug(f'Total tracks: {total_tracks}')
+        logger.debug(f"Total tracks: {total_tracks}")
         music_start = 56 if he_version >= 80 else 20
         file.seek(music_start, SEEK_SET)
 
         # Read song info
-        logger.debug('Reading songs info')
+        logger.debug("Reading songs info")
         songs = []
         for _ in range(total_tracks):
             id_, offset, size = unpack('<3I', file.read(12))
-            logger.debug(f'Song id={id_} offset={offset} size={size}')
+            logger.debug(f"Song id={id_} offset={offset} size={size}")
             songs.append(SongInfo(id_, offset, size))
 
             file.seek(9 if he_version >= 80 else 13, SEEK_CUR)
@@ -79,36 +79,41 @@ class HEMusicExtractor:
 
         assert not file.closed
 
-        logger.debug('Reading song data')
+        logger.debug("Reading song data")
         for song in songs:
-            logger.debug(f'Seeking to song with id {song.id} at {song.offset}')
+            logger.debug(f"Seeking to song with id {song.id} at {song.offset}")
             file.seek(song.offset, SEEK_SET)
             sound_fmt = file.read(4)
             if sound_fmt != b'DIGI':
-                warnings.warn(f'Sound format {sound_fmt} for song with id '
-                              f'{song.id} isn\'t supported; skipping')
+                warnings.warn(
+                    f"Sound format {sound_fmt} for song with id {song.id} "
+                    f"isn't supported; skipping"
+                )
                 continue
 
             file.seek(song.offset + 22, SEEK_SET)
             rate: int = unpack('<I', file.read(4))[0]
 
-            file.seek(song.offset + 32, SEEK_SET)  # Skip DIGI/TALK (8) and HSHD (24) blocks
+            # Skip DIGI/TALK (8) and HSHD (24) blocks
+            file.seek(song.offset + 32, SEEK_SET)
             chunk_header = file.read(4)
             if chunk_header == b'SBNG':
                 # There's apparently some "code" packed in here, I'm just
                 # skipping past it
-                logger.debug('Code header found; skipping')
+                logger.debug("Code header found; skipping")
                 song.sbng_code_offset = 40
                 code_len = unpack('>I', file.read(4))[0] - 8
                 f.seek(code_len, SEEK_CUR)
                 # Ensure we've moved ahead to an SDAT chunk
                 chunk_header = f.read(4)
             if chunk_header != b'SDAT':
-                warnings.warn(f'Song with id {song.id} at offset {song.offset} '
-                              f'failed a payload header check; skipping')
+                warnings.warn(
+                    f"Song with id {song.id} at offset {song.offset} failed a "
+                    f"payload header check; skipping"
+                )
                 continue
             size: int = unpack('>I', file.read(4))[0] - 8
-            logger.debug(f'Reading payload with size {size}')
+            logger.debug(f"Reading payload with size {size}")
             payload = file.read(size)
 
             song.rate = rate
@@ -130,8 +135,10 @@ if __name__ == '__main__':
     logger.setLevel('INFO')
 
 
-    def write_pcm_to_file(output_path: Path, payload: bytes, samplerate: int,
-                          output_options: List[str] = None):
+    def write_pcm_to_file(
+            output_path: Path, payload: bytes, samplerate: int,
+            output_options: List[str] = None
+    ):
         """
         Write unsigned 8-bit audio data to an audio file.
 
@@ -148,18 +155,25 @@ if __name__ == '__main__':
             *output_options,
             str(output_path.resolve())
         ], stdin=PIPE)
-        logger.info(f'Writing file {output_path.name}')
+        logger.info(f"Writing file {output_path.name}")
         out, err = ffmpeg.communicate(payload)
         if err:
-            print(f'ffmpeg returned with error ({err})')
+            print(f"ffmpeg returned with error ({err})")
         return out
 
 
-    def write_pcm_to_mp3(output_path: Path, payload: bytes, samplerate: int,
-                         quality_or_bitrate: Union[int, str] = 0,
-                         title: str = None, artist: str = None,
-                         album: str = None, year: str = None,
-                         track: int = None, comment: str = None):
+    def write_pcm_to_mp3(
+            output_path: Path,
+            payload: bytes,
+            samplerate: int,
+            quality_or_bitrate: Union[int, str] = 0,
+            title: str = None,
+            artist: str = None,
+            album: str = None,
+            year: str = None,
+            track: int = None,
+            comment: str = None
+    ):
         """
         Write unsigned 8-bit audio data to an MP3 file.
 
@@ -178,8 +192,10 @@ if __name__ == '__main__':
 
         options = ['-c:a', 'libmp3lame']
 
-        assert (quality_or_bitrate is None
-                or isinstance(quality_or_bitrate, (int, str)))
+        assert (
+                quality_or_bitrate is None
+                or isinstance(quality_or_bitrate, (int, str))
+        )
         if isinstance(quality_or_bitrate, int):
             options += ['-q:a', str(quality_or_bitrate)]
         elif isinstance(quality_or_bitrate, str):
@@ -203,67 +219,76 @@ if __name__ == '__main__':
 
 
     parser = argparse.ArgumentParser(
-        description='Extract music from Humongous Entertainment game data'
+        description="Extract music from Humongous Entertainment game data"
     )
     parser.add_argument(
         'game_data', type=Path,
-        help='Data file containing music to extract. It should always have '
-             'an .HE4 file extension (e.g. PUTTZOO.HE4).'
+        help=(
+            "Data file containing music to extract. It should always have "
+            "an .HE4 file extension (e.g. PUTTZOO.HE4)."
+        )
     )
     parser.add_argument(
         'output_dir', type=Path,
-        help='Directory to write music files to'
+        help="Directory to write music files to"
     )
     parser.add_argument(
         '-f', '--format', default='wav', required=False,
-        help='Output audio format'
+        help="Output audio format"
     )
     parser.add_argument(
         '-p', '--filename_prefix', default='Song', required=False,
-        help='Prefix to add to filenames'
+        help="Prefix to add to filenames"
     )
     parser.add_argument(
         '--use_song_ids', required=False, action='store_true',
-        help='Use the song IDs found in the data file (default is to number '
-             'starting at 1 instead)'
+        help=(
+            "Use the song IDs found in the data file (default is to number "
+            "starting at 1 instead)"
+        )
     )
     parser.add_argument(
         '-v', '--verbose', required=False, action='store_true',
-        help='Display debug info'
+        help="Display debug info"
     )
 
     mp3_group = parser.add_argument_group(
-        'MP3 Options', 'MP3-specific options (set format with -f mp3)')
+        "MP3 Options", "MP3-specific options (set format with -f mp3)"
+    )
     mp3_group.add_argument(
         '--mp3_quality', default=1, required=False, type=try_int_coerce,
-        help='Quality or bitrate of MP3 encoding. Either supply an integer to '
-             'encode with a variable bitrate quality preset or supply a string '
-             'like 320k to encode with a constant bitrate. (default=1)'
+        help=(
+            "Quality or bitrate of MP3 encoding. Either supply an integer to "
+            "encode with a variable bitrate quality preset or supply a string "
+            "like 320k to encode with a constant bitrate. (default=1)"
+        )
     )
 
     metadata_group = parser.add_argument_group(
-        'Metadata Options',
-        'Metadata to add to song files (may only work for MP3 files)'
+        "Metadata Options",
+        "Metadata to add to song files (may only work for MP3 files)"
     )
     metadata_group.add_argument(
         '--title_prefix', default='Song ', required=False,
-        help='Prefix to prepend to song IDs in their title metadata (songs are '
-             'identified by numbers instead of names)'
+        help=(
+            "Prefix to prepend to song IDs in their title metadata (songs are "
+            "identified by numbers instead of names)"
+        )
     )
     metadata_group.add_argument(
-        '--artist', required=False, help='Soundtrack composer'
+        '--artist', required=False, help="Soundtrack composer"
     )
     metadata_group.add_argument(
-        '--album', required=False, help='Album name'
+        '--album', required=False, help="Album name"
     )
     metadata_group.add_argument(
-        '--year', required=False, help='Year released'
+        '--year', required=False, help="Year released"
     )
     metadata_group.add_argument(
-        '--genre', default='Soundtrack', required=False, help='Music genre'
+        '--genre', default='Soundtrack', required=False, help="Music genre"
     )
     metadata_group.add_argument(
-        '--comment', required=False, help='Comment to add to each song'
+        '--comment', required=False, help="Comment to add to each song"
     )
 
     args = parser.parse_args()
