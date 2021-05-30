@@ -85,9 +85,14 @@ class HEMusicExtractor:
             sound_fmt = file.read(4)
             if sound_fmt != b'DIGI':
                 logger.warning(
-                    f"Sound format {sound_fmt} for song with id {song.id} "
-                    f"isn't supported; skipping"
+                    f"Didn't find DIGI header for song with id {song.id}. "
+                    f"Interpreting this payload as pure PCM with a sample "
+                    f"rate of 11025."
                 )
+                logger.debug(f"{sound_fmt} != b'DIGI' at {song.offset}")
+                file.seek(-4, SEEK_CUR)
+                song.rate = 11025
+                song.payload = file.read(song.size)
                 continue
 
             file.seek(song.offset + 22, SEEK_SET)
