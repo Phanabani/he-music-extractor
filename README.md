@@ -30,10 +30,13 @@ variable before running this tool.
 
 ## Usage
 
+All you need to do is locate your game's `.HE4` data file. This file contains
+the music data for the game.
+
 Basic usage (outputs wav files):
 
 ```shell
-python HE_music_extractor.py "C:\Program Files (x86)\Steam\steamapps\common\Freddi Fish 2\Freddi2.he4" "C:\Users\Me\Music\FreddiFish2"
+python HE_music_extractor.py "C:\Program Files (x86)\Steam\steamapps\common\Freddi Fish 2\Freddi2.he4" "C:\Users\Me\Music\Freddi Fish 2 Soundtrack"
 ```
 
 Output MP3 files with ID3v2 tags (the `^`s on Windows let us continue the command on
