@@ -43,7 +43,8 @@ Output MP3 files with ID3v2 tags (the `^`s on Windows let us continue the comman
 the next line -- they're not required):
 
 ```shell
-python HE_music_extractor.py -f mp3 ^
+python HE_music_extractor.py ^
+    -f mp3 ^
     --artist "Tom McGurk" ^
     --album "Freddi Fish 2: The Case of the Haunted Schoolhouse" ^
     --year 1996 ^
