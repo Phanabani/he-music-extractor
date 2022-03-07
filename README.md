@@ -60,4 +60,4 @@ python HE_music_extractor.py --help
 
 ## License
 
-[MIT © Hawkpath.](LICENSE)
+[MIT © Phanabani.](LICENSE)
